@@ -166,12 +166,19 @@
   }
   .etq-toolbar .count{letter-spacing:.03em;}
   .etq-toolbar .count b{color:#fff;font-size:14px;}
+  .etq-toolbar .actions{display:flex;gap:10px;}
   .etq-print-btn{
     background:transparent;border:1.5px solid #fff;color:#fff;
     padding:9px 20px;font-family:var(--font-body);font-weight:600;font-size:13px;
     cursor:pointer;letter-spacing:.02em;
   }
   .etq-print-btn:hover{background:#fff;color:var(--ink);}
+  .etq-clear-btn{
+    background:transparent;border:1.5px solid var(--safety-dim);color:var(--safety);
+    padding:9px 20px;font-family:var(--font-body);font-weight:600;font-size:13px;
+    cursor:pointer;letter-spacing:.02em;
+  }
+  .etq-clear-btn:hover{background:var(--safety);border-color:var(--safety);color:#1c1f22;}
 
   /* ---------- FEUILLE D'ETIQUETTES (format physique 70 x 37 mm, 24/planche, 0 marge) ---------- */
   .etq-sheet-wrap{background:var(--steel-soft);padding:1px;overflow-x:auto;}
@@ -323,7 +330,11 @@
 
     <div class="etq-toolbar">
       <div class="count"><b id="etq-total">0</b> référence(s) · <span id="etq-pages">0</span> planche(s)</div>
-      <button class="etq-print-btn" id="etq-print-btn">Imprimer les planches</button>
+      <div class="actions">
+        <button class="etq-print-btn" id="etq-print-btn">Imprimer les planches</button>
+        <button class="etq-clear-btn" id="etq-clear-btn">Vider tout</button>
+      </div>
+    </div>
     </div>
 
     <div class="etq-sheet-wrap" id="etq-sheet-wrap">
@@ -540,6 +551,16 @@
     await postToSheet(items);
   }
 
+  async function clearAll(){
+    const sure = confirm(
+      "Vider TOUTES les références ?\n\n" +
+      "Ça supprime définitivement les données du Google Sheet (pas juste l'affichage). " +
+      "Utilise ça quand une planche est terminée et que tu veux repartir de zéro pour la suivante."
+    );
+    if (!sure) return;
+    await postToSheet({ action: 'clear' });
+  }
+
   function render(){
     sheetWrap.innerHTML = '';
     $('etq-total').textContent = data.length;
@@ -590,6 +611,7 @@
     if (appUrl) $('etq-url-input').value = appUrl;
   });
   $('etq-print-btn').addEventListener('click', () => window.print());
+  $('etq-clear-btn').addEventListener('click', clearAll);
 
   /* ---------- Onglets ---------- */
   const tabLabelsBtn = $('tab-labels-btn');
