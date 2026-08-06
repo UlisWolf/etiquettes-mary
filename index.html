@@ -301,9 +301,9 @@
 
   async function loadUrl(){
     try{
-      const res = await window.storage.get(STORE_KEY, false);
-      if (res && res.value){
-        appUrl = res.value;
+      const saved = localStorage.getItem(STORE_KEY);
+      if (saved){
+        appUrl = saved;
         setStatus(true, 'connecté');
         configPanel.style.display = 'none';
         await refresh();
@@ -323,7 +323,7 @@
       alert("Ça ne ressemble pas à une URL de Web App Apps Script (elle doit commencer par https://script.google.com/macros/...)");
       return;
     }
-    await window.storage.set(STORE_KEY, val, false);
+    localStorage.setItem(STORE_KEY, val);
     appUrl = val;
     configPanel.style.display = 'none';
     setStatus(true, 'connecté');
