@@ -67,6 +67,41 @@
   }
   .etq-config button:hover{background:#ff7f3d;}
 
+  /* ---------- ONGLETS ---------- */
+  .etq-tabs{display:flex;gap:2px;margin-bottom:22px;}
+  .etq-tab{
+    background:#25292d;border:none;color:#8b9198;
+    padding:11px 22px;font-family:var(--font-body);font-weight:600;font-size:13.5px;
+    cursor:pointer;letter-spacing:.02em;border-bottom:2px solid transparent;
+  }
+  .etq-tab.active{color:#fff;border-bottom-color:var(--safety);background:#2a2e33;}
+  .etq-tab:hover{color:#fff;}
+  .etq-panel{display:none;}
+  .etq-panel.active{display:block;}
+
+  /* ---------- REGLAGES TYPO ---------- */
+  .etq-settings{
+    background:#25292d;padding:24px 26px;margin-bottom:26px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+  }
+  .etq-setting-group{background:#1c1f22;padding:16px 18px;border:1px solid #3a3f44;}
+  .etq-setting-group h3{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--safety);margin:0 0 14px;
+  }
+  .etq-setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .etq-setting-row:last-child{margin-bottom:0;}
+  .etq-setting-row label{font-size:13px;color:#e4e0d8;display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .etq-setting-row input[type="checkbox"]{width:15px;height:15px;accent-color:var(--safety);cursor:pointer;}
+  .etq-setting-row input[type="number"]{
+    width:64px;background:#1c1f22;border:1px solid #444a50;color:#fff;
+    padding:6px 8px;font-family:var(--font-mono);font-size:12.5px;text-align:center;
+  }
+  .etq-setting-row input[type="number"]:focus{outline:none;border-color:var(--safety);}
+  .etq-setting-hint{
+    font-family:var(--font-mono);font-size:11px;color:#8b9198;margin-top:16px;line-height:1.6;
+  }
+
   /* ---------- FORM D'AJOUT ---------- */
   .etq-form{
     background:#25292d;padding:18px 20px;margin-bottom:26px;
@@ -178,7 +213,10 @@
     border:1px solid var(--paper-line);
   }
   .etq-label .desig{
-    font-family:var(--font-body);font-weight:700;font-size:11.5px;
+    font-family:var(--font-body);
+    font-weight:var(--desig-weight,700);
+    font-style:var(--desig-style,normal);
+    font-size:var(--desig-size,9pt);
     text-align:center;line-height:1.2;
     text-transform:uppercase;letter-spacing:.01em;
     padding:0 6px;word-break:break-word;
@@ -187,8 +225,20 @@
     display:flex;justify-content:space-between;align-items:center;
     border-top:1px dotted var(--paper-line);padding-top:5px;margin-top:6px;
   }
-  .etq-label .ref{font-family:var(--font-mono);font-size:11px;color:var(--steel-soft);}
-  .etq-label .prix{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);}
+  .etq-label .ref{
+    font-family:var(--font-mono);
+    font-weight:var(--ref-weight,400);
+    font-style:var(--ref-style,normal);
+    font-size:var(--ref-size,8pt);
+    color:var(--steel-soft);
+  }
+  .etq-label .prix{
+    font-family:var(--font-mono);
+    font-weight:var(--prix-weight,700);
+    font-style:var(--prix-style,normal);
+    font-size:var(--prix-size,9pt);
+    color:var(--ink);
+  }
   .etq-label.empty{border-style:dashed;background:transparent;}
 
   .etq-empty-state{
@@ -230,6 +280,13 @@
       <input id="etq-url-input" type="text" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec" />
       <button id="etq-url-save">Connecter</button>
     </div>
+
+    <div class="etq-tabs">
+      <button class="etq-tab active" id="tab-labels-btn">Étiquettes</button>
+      <button class="etq-tab" id="tab-settings-btn">Paramétrage</button>
+    </div>
+
+    <div class="etq-panel active" id="panel-labels">
 
     <form class="etq-form" id="etq-form">
       <div>
@@ -273,6 +330,53 @@
       <div class="etq-empty-state" id="etq-empty">Connecte ton Google Sheet pour voir apparaître les étiquettes ici.</div>
     </div>
 
+    </div><!-- /panel-labels -->
+
+    <div class="etq-panel" id="panel-settings">
+      <div class="etq-settings">
+        <div class="etq-setting-group">
+          <h3>Désignation</h3>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-desig-bold"> Gras</label>
+          </div>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-desig-italic"> Italique</label>
+          </div>
+          <div class="etq-setting-row">
+            <label>Taille (pt)</label>
+            <input type="number" id="s-desig-size" min="5" max="24" step="0.5">
+          </div>
+        </div>
+        <div class="etq-setting-group">
+          <h3>Référence</h3>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-ref-bold"> Gras</label>
+          </div>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-ref-italic"> Italique</label>
+          </div>
+          <div class="etq-setting-row">
+            <label>Taille (pt)</label>
+            <input type="number" id="s-ref-size" min="5" max="24" step="0.5">
+          </div>
+        </div>
+        <div class="etq-setting-group">
+          <h3>Prix</h3>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-prix-bold"> Gras</label>
+          </div>
+          <div class="etq-setting-row">
+            <label><input type="checkbox" id="s-prix-italic"> Italique</label>
+          </div>
+          <div class="etq-setting-row">
+            <label>Taille (pt)</label>
+            <input type="number" id="s-prix-size" min="5" max="24" step="0.5">
+          </div>
+        </div>
+      </div>
+      <p class="etq-setting-hint" style="padding:0 4px;">Les changements s'appliquent immédiatement sur l'onglet Étiquettes, et restent mémorisés sur cet appareil.</p>
+    </div><!-- /panel-settings -->
+
   </div>
 </div>
 
@@ -281,6 +385,18 @@
   const PER_PAGE = 24;
   const COLS = 3;
   const STORE_KEY = 'appscript_url';
+  const STYLE_KEY = 'etq_style_settings';
+
+  // URL préconfigurée de ton Web App Google Apps Script — connexion automatique,
+  // pas besoin de la coller à chaque fois. Si elle est fausse/incomplète, corrige-la
+  // une fois via "changer la connexion", elle sera alors mémorisée à sa place.
+  const DEFAULT_APP_URL = 'https://script.google.com/macros/s/AKfycbwxAA6EmMeBTzC38hsnZODrmeF81TkJ7XsIZqS9myA7h4iWFxZHe2/exec';
+
+  const DEFAULT_STYLES = {
+    desig: { bold: true,  italic: false, size: 9 },
+    ref:   { bold: false, italic: false, size: 8 },
+    prix:  { bold: true,  italic: false, size: 9 }
+  };
 
   let appUrl = null;
   let data = [];
@@ -305,7 +421,11 @@
 
   async function loadUrl(){
     try{
-      const saved = localStorage.getItem(STORE_KEY);
+      let saved = localStorage.getItem(STORE_KEY);
+      if (!saved && DEFAULT_APP_URL){
+        saved = DEFAULT_APP_URL;
+        localStorage.setItem(STORE_KEY, saved);
+      }
       if (saved){
         appUrl = saved;
         setStatus(true, 'connecté');
@@ -470,6 +590,76 @@
     if (appUrl) $('etq-url-input').value = appUrl;
   });
   $('etq-print-btn').addEventListener('click', () => window.print());
+
+  /* ---------- Onglets ---------- */
+  const tabLabelsBtn = $('tab-labels-btn');
+  const tabSettingsBtn = $('tab-settings-btn');
+  const panelLabels = $('panel-labels');
+  const panelSettings = $('panel-settings');
+
+  tabLabelsBtn.addEventListener('click', () => {
+    tabLabelsBtn.classList.add('active'); tabSettingsBtn.classList.remove('active');
+    panelLabels.classList.add('active'); panelSettings.classList.remove('active');
+  });
+  tabSettingsBtn.addEventListener('click', () => {
+    tabSettingsBtn.classList.add('active'); tabLabelsBtn.classList.remove('active');
+    panelSettings.classList.add('active'); panelLabels.classList.remove('active');
+  });
+
+  /* ---------- Réglages typo (appliqués en direct via variables CSS) ---------- */
+  const styleFields = ['desig', 'ref', 'prix'];
+
+  function loadStyles(){
+    let s;
+    try{
+      const raw = localStorage.getItem(STYLE_KEY);
+      s = raw ? JSON.parse(raw) : null;
+    }catch(e){ s = null; }
+    if (!s) s = JSON.parse(JSON.stringify(DEFAULT_STYLES));
+    return s;
+  }
+
+  function applyStyles(s){
+    const root = document.documentElement.style;
+    styleFields.forEach(f => {
+      root.setProperty('--' + f + '-weight', s[f].bold ? '700' : '400');
+      root.setProperty('--' + f + '-style', s[f].italic ? 'italic' : 'normal');
+      root.setProperty('--' + f + '-size', s[f].size + 'pt');
+    });
+  }
+
+  function fillStyleInputs(s){
+    styleFields.forEach(f => {
+      $('s-' + f + '-bold').checked = !!s[f].bold;
+      $('s-' + f + '-italic').checked = !!s[f].italic;
+      $('s-' + f + '-size').value = s[f].size;
+    });
+  }
+
+  let currentStyles = loadStyles();
+  applyStyles(currentStyles);
+  fillStyleInputs(currentStyles);
+
+  styleFields.forEach(f => {
+    $('s-' + f + '-bold').addEventListener('change', (e) => {
+      currentStyles[f].bold = e.target.checked;
+      applyStyles(currentStyles);
+      localStorage.setItem(STYLE_KEY, JSON.stringify(currentStyles));
+    });
+    $('s-' + f + '-italic').addEventListener('change', (e) => {
+      currentStyles[f].italic = e.target.checked;
+      applyStyles(currentStyles);
+      localStorage.setItem(STYLE_KEY, JSON.stringify(currentStyles));
+    });
+    $('s-' + f + '-size').addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v) && v > 0){
+        currentStyles[f].size = v;
+        applyStyles(currentStyles);
+        localStorage.setItem(STYLE_KEY, JSON.stringify(currentStyles));
+      }
+    });
+  });
 
   const bulkBody = $('bulk-body');
   const bulkToggleBtn = $('bulk-toggle-btn');
