@@ -105,7 +105,7 @@
   /* ---------- FORM D'AJOUT ---------- */
   .etq-form{
     background:#25292d;padding:18px 20px;margin-bottom:26px;
-    display:grid;grid-template-columns:1.1fr 2fr 1fr auto;gap:12px;align-items:end;
+    display:grid;grid-template-columns:1.1fr 2fr 1fr .7fr auto;gap:12px;align-items:end;
   }
   .etq-form label{
     display:block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;
@@ -308,18 +308,22 @@
         <label>Prix (€)</label>
         <input type="text" id="f-prix" inputmode="decimal" placeholder="80,00" required />
       </div>
+      <div>
+        <label>Quantité</label>
+        <input type="number" id="f-qty" min="1" step="1" value="1" required />
+      </div>
       <button type="submit" id="f-submit">+ Ajouter</button>
       <div class="etq-form-msg" id="f-msg"></div>
     </form>
 
     <div class="etq-bulk" id="etq-bulk">
       <div class="etq-bulk-head" id="bulk-toggle">
-        <label>Coller plusieurs lignes d'un coup (copie direct depuis Excel/Sheets — colonnes : référence, désignation, prix)</label>
+        <label>Coller plusieurs lignes d'un coup (copie direct depuis Excel/Sheets — colonnes : référence, désignation, prix, quantité)</label>
         <button type="button" id="bulk-toggle-btn">Ouvrir</button>
       </div>
       <div class="etq-bulk-body" id="bulk-body" style="display:none;">
-        <textarea id="bulk-textarea" rows="6" placeholder="6020080215	RANGEMENT BAS DE PORTE	80,00
-6020080216	SEUILS DE PC	320,00"></textarea>
+        <textarea id="bulk-textarea" rows="6" placeholder="6020080215	RANGEMENT BAS DE PORTE	80,00	4
+6020080216	SEUILS DE PC	320,00	1"></textarea>
         <div class="etq-bulk-footer">
           <span id="bulk-preview-count"></span>
           <button type="button" id="bulk-submit">Ajouter toutes les lignes</button>
@@ -329,7 +333,7 @@
     </div>
 
     <div class="etq-toolbar">
-      <div class="count"><b id="etq-total">0</b> référence(s) · <span id="etq-pages">0</span> planche(s)</div>
+      <div class="count"><b id="etq-total">0</b> référence(s) · <b id="etq-label-total">0</b> étiquette(s) · <span id="etq-pages">0</span> planche(s)</div>
       <div class="actions">
         <button class="etq-print-btn" id="etq-print-btn">Imprimer les planches</button>
         <button class="etq-clear-btn" id="etq-clear-btn">Vider tout</button>
@@ -516,9 +520,11 @@
     await refresh();
   }
 
-  async function addLine(ref, desig, prix){
+  async function addLine(ref, desig, prix, qty){
     const priceNum = parseFloat(String(prix).replace(',', '.'));
-    const payload = { reference: ref, designation: desig, prix: isNaN(priceNum) ? prix : priceNum };
+    let qtyNum = parseInt(qty, 10);
+    if (isNaN(qtyNum) || qtyNum < 1) qtyNum = 1;
+    const payload = { reference: ref, designation: desig, prix: isNaN(priceNum) ? prix : priceNum, quantite: qtyNum };
     await postToSheet(payload);
   }
 
@@ -531,18 +537,21 @@
       if (parts.length < 3) parts = line.split(';');
       if (parts.length < 3) parts = line.split(',');
       if (parts.length < 3){
-        errors.push('Ligne ' + (idx + 1) + ' ignorée (3 colonnes attendues)');
+        errors.push('Ligne ' + (idx + 1) + ' ignorée (au moins 3 colonnes attendues)');
         return;
       }
       const ref = (parts[0] || '').trim();
       const desig = (parts[1] || '').trim();
       const prixRaw = (parts[2] || '').trim();
+      const qtyRaw = (parts[3] || '').trim();
       const prix = parseFloat(prixRaw.replace(/[^\d,.-]/g, '').replace(',', '.'));
+      let qty = parseInt(qtyRaw, 10);
+      if (isNaN(qty) || qty < 1) qty = 1;
       if (!ref || !desig || isNaN(prix)){
         errors.push('Ligne ' + (idx + 1) + ' ignorée (champ manquant ou prix invalide)');
         return;
       }
-      items.push({ reference: ref, designation: desig, prix: prix });
+      items.push({ reference: ref, designation: desig, prix: prix, quantite: qty });
     });
     return { items, errors };
   }
@@ -561,18 +570,31 @@
     await postToSheet({ action: 'clear' });
   }
 
+  function expandByQuantity(items){
+    const out = [];
+    items.forEach(it => {
+      let qty = parseInt(it.quantite, 10);
+      if (isNaN(qty) || qty < 1) qty = 1;
+      for (let i = 0; i < qty; i++) out.push(it);
+    });
+    return out;
+  }
+
   function render(){
     sheetWrap.innerHTML = '';
-    $('etq-total').textContent = data.length;
-    $('etq-pages').textContent = data.length ? Math.ceil(data.length / PER_PAGE) : 0;
+    const expanded = expandByQuantity(data);
 
-    if (!data.length){
+    $('etq-total').textContent = data.length;
+    $('etq-label-total').textContent = expanded.length;
+    $('etq-pages').textContent = expanded.length ? Math.ceil(expanded.length / PER_PAGE) : 0;
+
+    if (!expanded.length){
       emptyState.textContent = 'Aucune référence pour le moment — ajoute ta première ligne ci-dessus.';
       sheetWrap.appendChild(emptyState);
       return;
     }
 
-    const totalPages = Math.ceil(data.length / PER_PAGE);
+    const totalPages = Math.ceil(expanded.length / PER_PAGE);
     for (let p = 0; p < totalPages; p++){
       if (p > 0){
         const sep = document.createElement('div');
@@ -582,7 +604,7 @@
       }
       const page = document.createElement('div');
       page.className = 'etq-page';
-      const slice = data.slice(p*PER_PAGE, p*PER_PAGE + PER_PAGE);
+      const slice = expanded.slice(p*PER_PAGE, p*PER_PAGE + PER_PAGE);
       for (let i = 0; i < PER_PAGE; i++){
         const item = slice[i];
         const cell = document.createElement('div');
@@ -735,13 +757,14 @@
     const ref = $('f-ref').value.trim();
     const desig = $('f-desig').value.trim();
     const prix = $('f-prix').value.trim();
+    const qty = $('f-qty').value.trim();
     const msg = $('f-msg');
     const btn = $('f-submit');
     if (!appUrl){ msg.className = 'etq-form-msg err'; msg.textContent = 'Connecte d\'abord ton Google Sheet.'; return; }
     btn.disabled = true; btn.textContent = 'Ajout…';
     msg.textContent = '';
     try{
-      await addLine(ref, desig, prix);
+      await addLine(ref, desig, prix, qty);
       $('etq-form').reset();
       msg.className = 'etq-form-msg ok';
       msg.textContent = 'Ligne ajoutée.';
