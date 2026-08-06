@@ -138,14 +138,16 @@
   }
   .etq-print-btn:hover{background:#fff;color:var(--ink);}
 
-  /* ---------- FEUILLE D'ETIQUETTES ---------- */
-  .etq-sheet-wrap{background:var(--steel-soft);padding:1px;}
+  /* ---------- FEUILLE D'ETIQUETTES (format physique 70 x 37 mm, 24/planche, 0 marge) ---------- */
+  .etq-sheet-wrap{background:var(--steel-soft);padding:1px;overflow-x:auto;}
   .etq-page{
     background:var(--paper);
-    padding:14mm 10mm;
+    width:210mm;
+    margin:0 auto;
+    padding:0;
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    grid-auto-rows:min-content;
+    grid-template-columns:repeat(3,70mm);
+    grid-auto-rows:37mm;
     gap:0;
   }
   .etq-page + .etq-page{margin-top:0;}
@@ -161,10 +163,11 @@
   }
 
   .etq-label{
+    box-sizing:border-box;
+    width:70mm;height:37mm;
     border:1px solid var(--paper-line);
     position:relative;
     padding:9px 8px 8px;
-    min-height:64px;
     display:flex;flex-direction:column;justify-content:space-between;
     background:#fff;
     margin:-1px 0 0 -1px;
@@ -193,14 +196,15 @@
   }
 
   /* ---------- PRINT ---------- */
+  @page{ size: A4; margin: 0; }
   @media print{
     body *{visibility:hidden;}
     .etq-sheet-wrap,.etq-sheet-wrap *{visibility:visible;}
-    .etq-sheet-wrap{position:absolute;top:0;left:0;width:100%;background:#fff;}
-    .etq-page{padding:8mm 6mm;}
+    .etq-sheet-wrap{position:absolute;top:0;left:0;width:100%;background:#fff;padding:0;overflow:visible;}
+    .etq-page{width:210mm;}
     .etq-page-sep{display:none;}
     .etq-page{page-break-after:always;}
-    .etq-header,.etq-config,.etq-form,.etq-toolbar{display:none!important;}
+    .etq-header,.etq-config,.etq-form,.etq-bulk,.etq-toolbar{display:none!important;}
   }
 </style>
 
