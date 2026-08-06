@@ -334,8 +334,7 @@
     if (!appUrl) return;
     setStatus(true, 'chargement…');
     try{
-      const res = await fetch(appUrl, { method: 'GET' });
-      const json = await res.json();
+      const json = await jsonpRequest(appUrl);
       data = Array.isArray(json) ? json : [];
       setStatus(true, 'connecté');
       render();
@@ -347,17 +346,45 @@
     }
   }
 
-  async function addLine(ref, desig, prix){
-    const priceNum = parseFloat(String(prix).replace(',', '.'));
-    const payload = { reference: ref, designation: desig, prix: isNaN(priceNum) ? prix : priceNum };
-    const res = await fetch(appUrl, {
+  function jsonpRequest(url){
+    return new Promise((resolve, reject) => {
+      const cbName = 'etqCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const script = document.createElement('script');
+      let done = false;
+      window[cbName] = function(payload){
+        done = true;
+        resolve(payload);
+        cleanup();
+      };
+      function cleanup(){
+        delete window[cbName];
+        script.remove();
+      }
+      script.onerror = () => { if (!done){ reject(new Error('jsonp load error')); cleanup(); } };
+      const sep = url.indexOf('?') > -1 ? '&' : '?';
+      script.src = url + sep + 'callback=' + cbName + '&t=' + Date.now();
+      document.body.appendChild(script);
+      setTimeout(() => { if (!done){ reject(new Error('jsonp timeout')); cleanup(); } }, 12000);
+    });
+  }
+
+  async function postToSheet(payload){
+    await fetch(appUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error('write failed');
-    data.push(payload);
-    render();
+    // réponse "opaque" en no-cors : on ne peut pas la lire, donc on
+    // laisse le temps au Sheet d'être mis à jour puis on relit la vraie donnée
+    await new Promise(r => setTimeout(r, 700));
+    await refresh();
+  }
+
+  async function addLine(ref, desig, prix){
+    const priceNum = parseFloat(String(prix).replace(',', '.'));
+    const payload = { reference: ref, designation: desig, prix: isNaN(priceNum) ? prix : priceNum };
+    await postToSheet(payload);
   }
 
   function parseBulkText(text){
@@ -386,14 +413,7 @@
   }
 
   async function addBulk(items){
-    const res = await fetch(appUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(items)
-    });
-    if (!res.ok) throw new Error('write failed');
-    data = data.concat(items);
-    render();
+    await postToSheet(items);
   }
 
   function render(){
